@@ -128,6 +128,26 @@ module Vanity
       end
 
 
+      # -- Exclude --
+
+      # Tells A/B test a list of experiments from which we will exclude participants
+      # from our counts if they converted on a test on the list but not our test.
+      #
+      # @example Exclude participants from our counts who converted on the login test
+      #         (ie exclude existing users)
+      #   ab_test "New Signup" do
+      #     metrics :signup
+      #     alternatives "red", "blue", "orange"
+      #     exclude :login
+      #   end
+      # @example Find experiments whose participants we are excluding
+      #   puts "Excluding from: " + experiment(:new_signup.exclude.map(&:name)
+      def exclude(*args)
+        @exclude = args.map { |id| @playground.experiment(id) } unless args.empty?
+        @exclude
+      end
+
+
       # -- Alternatives --
 
       # Call this method once to set alternative values for this experiment
