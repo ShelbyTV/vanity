@@ -44,15 +44,19 @@ module Vanity
         # Playground uses this to load experiment definitions.
         def load(playground, stack, file)
           fail "Circular dependency detected: #{stack.join('=>')}=>#{file}" if stack.include?(file)
-          source = File.read(file)
-          stack.push file
           id = File.basename(file, ".rb").downcase.gsub(/\W/, "_").to_sym
-          context = Object.new
-          context.instance_eval do
-            extend Definition
-            experiment = eval(source, context.new_binding(playground, id), file)
-            fail NameError.new("Expected #{file} to define experiment #{id}", id) unless playground.experiments[id]
-            experiment
+          if playground.experiments[id]
+            playground.experiments[id]
+          else
+            source = File.read(file)
+            stack.push file
+            context = Object.new
+            context.instance_eval do
+              extend Definition
+              experiment = eval(source, context.new_binding(playground, id), file)
+              fail NameError.new("Expected #{file} to define experiment #{id}", id) unless playground.experiments[id]
+              experiment
+            end
           end
         rescue
           error = NameError.exception($!.message, id)
@@ -126,7 +130,7 @@ module Vanity
         @description = text if text
         @description
       end
- 
+
 
       # -- Experiment completion --
 

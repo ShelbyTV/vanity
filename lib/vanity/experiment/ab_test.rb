@@ -81,7 +81,8 @@ module Vanity
 
       def load_counts
         if @experiment.playground.collecting?
-          @participants, @converted, @conversions = @experiment.playground.connection.ab_counts(@experiment.id, id).values_at(:participants, :converted, :conversions)
+          @participants, @converted, @conversions = 
+            @experiment.playground.connection.ab_counts(@experiment.id, id, @experiment.exclude).values_at(:participants, :converted, :conversions)
         else
           @participants = @converted = @conversions = 0
         end
@@ -143,7 +144,7 @@ module Vanity
       # @example Find experiments whose participants we are excluding
       #   puts "Excluding from: " + experiment(:new_signup.exclude.map(&:name)
       def exclude(*args)
-        @exclude = args.map { |id| @playground.experiment(id) } unless args.empty?
+        @exclude = args.map { |id| @playground.experiment(id, true) } unless args.empty?
         @exclude
       end
 

@@ -175,7 +175,7 @@ module Vanity
       # Returns counts for given A/B experiment and alternative (by index).
       # Returns hash with values for the keys :participants, :converted and
       # :conversions.
-      def ab_counts(experiment, alternative)
+      def ab_counts(experiment, alternative, exclude)
         record = VanityExperiment.retrieve(experiment)
         participants = VanityParticipant.count(:conditions => {:experiment_id => experiment.to_s, :seen => alternative})
         converted = VanityParticipant.count(:conditions => {:experiment_id => experiment.to_s, :converted => alternative})

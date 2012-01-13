@@ -107,7 +107,7 @@ module Vanity
         @experiments.exists("#{experiment}:completed_at")
       end
 
-      def ab_counts(experiment, alternative)
+      def ab_counts(experiment, alternative, exclude)
         { :participants => @experiments.scard("#{experiment}:alts:#{alternative}:participants").to_i,
           :converted    => @experiments.scard("#{experiment}:alts:#{alternative}:converted").to_i,
           :conversions  => @experiments["#{experiment}:alts:#{alternative}:conversions"].to_i }

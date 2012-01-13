@@ -91,14 +91,17 @@ module Vanity
       experiments[id] = experiment
     end
 
-    # Returns the experiment. You may not have guessed, but this method raises
-    # an exception if it cannot load the experiment's definition.
+    # Returns the experiment. You may not have guessed, but by default this method raises
+    # an exception if the experiment's definition can't be found.  Pass
+    # tryLoadOnFail = true to force an attempt to load the missing experiment if it
+    # is not found.
     #
     # @see Vanity::Experiment
-    def experiment(name)
+    def experiment(name, tryLoadOnFail = false)
       id = name.to_s.downcase.gsub(/\W/, "_").to_sym
       warn "Deprecated: pleae call experiment method with experiment identifier (a Ruby symbol)" unless id == name
-      experiments[id.to_sym] or raise NameError, "No experiment #{id}"
+      experiments[id.to_sym] or
+        tryLoadOnFail ? Experiment::Base.load(self, @loading, File.join(load_path, "#{name}.rb")) : raise(NameError, "No experiment #{id}")
     end
 
 

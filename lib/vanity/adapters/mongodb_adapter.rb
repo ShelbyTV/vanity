@@ -1,3 +1,5 @@
+require "set"
+
 module Vanity
   module Adapters
     class << self
@@ -125,10 +127,25 @@ module Vanity
         !!@experiments.find_one(:_id=>experiment, :completed_at=>{ "$exists"=>true })
       end
 
-      def ab_counts(experiment, alternative)
+      def ab_counts(experiment, alternative, exclude)
         record = @experiments.find_one({ :_id=>experiment }, { :fields=>[:conversions] })
         conversions = record && record["conversions"]
-        { :participants => @participants.find({ :experiment=>experiment, :seen=>alternative }).count,
+        participants = @participants.find({ :experiment=>experiment, :seen=>alternative })
+        participantsCount = participants.count
+        if exclude
+          #remove participants who converted on any excluded experiments without converting on this one
+          participantsSet = Set.new
+          participants.each { |row| participantsSet.add row['identity']}
+          potentialExclusionSet = Set.new
+          exclude.each do |toExclude|
+            @participants.find({:experiment => toExclude.id, :converted => {"$exists" => true}}).each do |row|
+              potentialExclusionSet.add row['identity']
+            end
+          end
+          excludedParticipantsSet = potentialExclusionSet - participantsSet
+          participantsCount = participantsCount - excludedParticipantsSet.size
+        end
+        { :participants => participantsCount,
           :converted    => @participants.find({ :experiment=>experiment, :converted=>alternative }).count,
           :conversions  => conversions && conversions[alternative.to_s] || 0 }
       end

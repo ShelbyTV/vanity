@@ -92,7 +92,7 @@ module Vanity
         @experiments[experiment] && @experiments[experiment][:completed_at]
       end
 
-      def ab_counts(experiment, alternative)
+      def ab_counts(experiment, alternative, exclude)
         @experiments[experiment] ||= {}
         @experiments[experiment][:alternatives] ||= {}
         alt = @experiments[experiment][:alternatives][alternative] ||= {}
