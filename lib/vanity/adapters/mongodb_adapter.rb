@@ -134,15 +134,15 @@ module Vanity
         participantsCount = participants.count
         if exclude
           #remove participants who converted on any excluded experiments without converting on this one
-          participantsSet = Set.new
-          participants.each { |row| participantsSet.add row['identity']}
+          neverConvertedSet = Set.new
+          participants.each { |row| neverConvertedSet.add row['identity'] unless row['converted']}
           potentialExclusionSet = Set.new
           exclude.each do |toExclude|
             @participants.find({:experiment => toExclude.id, :converted => {"$exists" => true}}).each do |row|
               potentialExclusionSet.add row['identity']
             end
           end
-          excludedParticipantsSet = potentialExclusionSet - participantsSet
+          excludedParticipantsSet = potentialExclusionSet & neverConvertedSet
           participantsCount = participantsCount - excludedParticipantsSet.size
         end
         { :participants => participantsCount,
