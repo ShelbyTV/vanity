@@ -1,5 +1,3 @@
-require "set"
-
 module Vanity
   module Adapters
     class << self
@@ -130,20 +128,17 @@ module Vanity
       def ab_counts(experiment, alternative, exclude)
         record = @experiments.find_one({ :_id=>experiment }, { :fields=>[:conversions] })
         conversions = record && record["conversions"]
-        participants = @participants.find({ :experiment=>experiment, :seen=>alternative })
-        participantsCount = participants.count
+        participantsCursor = @participants.find({ :experiment=>experiment, :seen=>alternative }, { :fields=>[:identity,:converted] })
+        participantsCount = participantsCursor.count
         if exclude
           #remove participants who converted on any excluded experiments without converting on this one
-          neverConvertedSet = Set.new
-          participants.each { |row| neverConvertedSet.add row['identity'] unless row['converted']}
-          potentialExclusionSet = Set.new
+          neverConvertedSet = participantsCursor.reject { |participant| participant['converted']}.collect { |participant| participant['identity']}
+          potentialExclusionSet = []
           exclude.each do |toExclude|
-            @participants.find({:experiment => toExclude.id, :converted => {"$exists" => true}}).each do |row|
-              potentialExclusionSet.add row['identity']
-            end
+            potentialExclusionSet += @participants.find({:experiment => toExclude.id}).select { |participant| participant['converted']}.collect { |participant| participant['identity']}
           end
           excludedParticipantsSet = potentialExclusionSet & neverConvertedSet
-          participantsCount = participantsCount - excludedParticipantsSet.size
+          participantsCount = participantsCount - excludedParticipantsSet.length
         end
         { :participants => participantsCount,
           :converted    => @participants.find({ :experiment=>experiment, :converted=>alternative }).count,
