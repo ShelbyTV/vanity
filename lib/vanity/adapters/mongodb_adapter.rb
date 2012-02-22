@@ -129,7 +129,7 @@ module Vanity
         record = @experiments.find_one({ :_id=>experiment }, { :fields=>[:conversions] })
         conversions = record && record["conversions"]
         participantsCursor = @participants.find({ :experiment=>experiment, :seen=>alternative }, { :fields=>[:identity,:converted] })
-        participantsCount = participantsCursor.count
+        participantsCount = participantsCursor.count(true)
         if exclude
           #remove participants who converted on any excluded experiments without converting on this one
           neverConvertedSet = participantsCursor.reject { |participant| participant['converted']}.collect { |participant| participant['identity']}
@@ -141,7 +141,7 @@ module Vanity
           participantsCount = participantsCount - excludedParticipantsSet.length
         end
         { :participants => participantsCount,
-          :converted    => @participants.find({ :experiment=>experiment, :converted=>alternative }).count,
+          :converted    => @participants.find({ :experiment=>experiment, :converted=>alternative }).count(true),
           :conversions  => conversions && conversions[alternative.to_s] || 0 }
       end
 
