@@ -7,14 +7,18 @@ module Vanity
       # connection). Vanity.playgroup.establish_connection uses this.
       #
       # @since 1.4.0
-      def establish_connection(spec)
+      def establish_connection(spec, logger = nil)
         begin
           require "vanity/adapters/#{spec[:adapter]}_adapter"
         rescue LoadError
           raise "Could not find #{spec[:adapter]} in your load path"
         end
         adapter_method = "#{spec[:adapter]}_connection"
-        send adapter_method, spec
+        if spec[:adapter] == 'mongodb'
+          send adapter_method, spec, logger
+        else
+          send adapter_method, spec
+        end
       end
     end
 

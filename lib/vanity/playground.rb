@@ -39,6 +39,11 @@ module Vanity
       end
 
       @options = defaults.merge(config).merge(options)
+      unless @logger = @options[:logger]
+        @logger = Logger.new(STDOUT)
+        @logger.level = Logger::ERROR
+      end
+
       if @options[:host] == 'redis' && @options.values_at(:host, :port, :db).any?
         warn "Deprecated: please specify Redis connection as URL (\"redis://host:port/db\")"
         establish_connection :adapter=>"redis", :host=>@options[:host], :port=>@options[:port], :database=>@options[:db] || @options[:database]
@@ -54,10 +59,6 @@ module Vanity
 
       warn "Deprecated: namespace option no longer supported directly" if @options[:namespace]
       @load_path = @options[:load_path] || DEFAULTS[:load_path]
-      unless @logger = @options[:logger]
-        @logger = Logger.new(STDOUT)
-        @logger.level = Logger::ERROR
-      end
       @loading = []
       @use_js = false
       self.add_participant_path = DEFAULT_ADD_PARTICIPANT_PATH
@@ -271,7 +272,7 @@ module Vanity
           :host=>uri.host, :port=>uri.port, :path=>uri.path, :params=>params
       else
         spec = spec.inject({}) { |hash,(k,v)| hash[k.to_sym] = v ; hash }
-        @adapter = Adapters.establish_connection(spec)
+        @adapter = Adapters.establish_connection(spec, @logger)
       end
     end
 

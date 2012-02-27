@@ -4,9 +4,9 @@ module Vanity
       # Creates new connection to MongoDB and returns MongoAdapter.
       #
       # @since 1.4.0
-      def mongo_connection(spec)
+      def mongo_connection(spec, logger)
         require "mongo"
-        MongodbAdapter.new(spec)
+        MongodbAdapter.new(spec, logger)
       end
       alias :mongodb_connection :mongo_connection
     end
@@ -17,8 +17,9 @@ module Vanity
     class MongodbAdapter < AbstractAdapter
       attr_reader :mongo
 
-      def initialize(options)
+      def initialize(options, logger)
         setup_connection(options)
+        @logger = logger
         @options = options.clone
         @options[:database] ||= (@options[:path] && @options[:path].split("/")[1]) || "vanity"
         connect!
@@ -168,8 +169,11 @@ module Vanity
         else
           participating = @participants.find_one(:experiment=>experiment, :identity=>identity, :seen=>alternative)
         end
-        @participants.update({ :experiment=>experiment, :identity=>identity }, { "$push"=>{ :converted=>alternative } }, :upsert=>true) if implicit || participating
-        @experiments.update({ :_id=>experiment }, { "$inc"=>{ "conversions.#{alternative}"=>count } }, :upsert=>true)
+        if implicit || participating
+          @participants.update({ :experiment=>experiment, :identity=>identity }, { "$push"=>{ :converted=>alternative } }, :upsert=>true)
+          @logger.info "Vanity: mongo -- @participants.update({ :experiment=>#{experiment}, :identity=>#{identity} }, { \"$push\"=>{ :converted=>#{alternative} } }, :upsert=>true) "
+        end
+        @logger.info "Vanity: mongo -- @experiments.update({ :_id=>#{experiment} }, { \"$inc\"=>{ \"conversions.#{alternative}\"=>#{count} } }, :upsert=>true) "
       end
 
       def ab_get_outcome(experiment)
