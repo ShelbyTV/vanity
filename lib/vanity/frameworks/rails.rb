@@ -41,15 +41,23 @@ module Vanity
           define_method(:vanity_identity) { block.call(self) }
         else
           define_method :vanity_identity do
-            return @vanity_identity if @vanity_identity
+            Vanity.playground.logger.info "Vanity: identity -- Let me tell you about the request #{request} and params #{params}"
+            if @vanity_identity
+              Vanity.playground.logger.info "Vanity: identity -- identity #{@vanity_identity} was already stored"
+              return @vanity_identity
+            end
             if symbol && object = send(symbol)
               @vanity_identity = object.id
+              Vanity.playground.logger.info "Vanity: identity -- we called your method and got identity #{@vanity_identity}"
+              @vanity_identity
             elsif request.get? && params[:_identity]
               @vanity_identity = params[:_identity]
               cookies["vanity_id"] = { :value=>@vanity_identity, :expires=>1.month.from_now }
+              Vanity.playground.logger.info "Vanity: identity -- we used the _identity parameter of the request and got identity #{@vanity_identity}"
               @vanity_identity
             elsif response # everyday use
               @vanity_identity = cookies["vanity_id"] || SecureRandom.hex(16)
+              Vanity.playground.logger.info "Vanity: identity -- we used the vanity_id cookie and got identity #{@vanity_identity}"
               cookie = { :value=>@vanity_identity, :expires=>1.month.from_now }
               # Useful if application and admin console are on separate domains.
               # This only works in Rails 3.x.

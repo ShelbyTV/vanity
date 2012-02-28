@@ -166,14 +166,19 @@ module Vanity
       def ab_add_conversion(experiment, alternative, identity, count = 1, implicit = false)
         if implicit
           @participants.update({ :experiment=>experiment, :identity=>identity }, { "$push"=>{ :seen=>alternative } }, :upsert=>true)
+          @logger.info "Vanity: IMPLICIT"
+          @logger.info "Vanity: mongo -- @participants.update({ :experiment=>#{experiment}, :identity=>#{identity} }, { \"$push\"=>{ :seen=>#{alternative} } }, :upsert=>true)"
         else
           participating = @participants.find_one(:experiment=>experiment, :identity=>identity, :seen=>alternative)
+          @logger.info "Vanity: NOT IMPLICIT"
+          @logger.info "Vanity: mongo -- @participants.find_one(:experiment=>#{experiment}, :identity=>#{identity}, :seen=>#{alternative}) = #{participating}"
         end
         if implicit || participating
           @participants.update({ :experiment=>experiment, :identity=>identity }, { "$push"=>{ :converted=>alternative } }, :upsert=>true)
-          @logger.info "Vanity: mongo -- @participants.update({ :experiment=>#{experiment}, :identity=>#{identity} }, { \"$push\"=>{ :converted=>#{alternative} } }, :upsert=>true) "
+          @logger.info "Vanity: mongo -- @participants.update({ :experiment=>#{experiment}, :identity=>#{identity} }, { \"$push\"=>{ :converted=>#{alternative} } }, :upsert=>true)"
         end
-        @logger.info "Vanity: mongo -- @experiments.update({ :_id=>#{experiment} }, { \"$inc\"=>{ \"conversions.#{alternative}\"=>#{count} } }, :upsert=>true) "
+        @logger.info "Vanity: mongo -- @experiments.update({ :_id=>#{experiment} }, { \"$inc\"=>{ \"conversions.#{alternative}\"=>#{count} } }, :upsert=>true)"
+        @experiments.update({ :_id=>experiment }, { "$inc"=>{ "conversions.#{alternative}"=>count } }, :upsert=>true)
       end
 
       def ab_get_outcome(experiment)
