@@ -191,7 +191,6 @@ module Vanity
     # @see Vanity::Metric
     # @since 1.1.0
     def metrics
-      @logger.info "Here's metrics right now: #{@metrics}"
       unless @metrics
         @metrics = {}
         @logger.info "Vanity: loading metrics from #{load_path}/metrics"
